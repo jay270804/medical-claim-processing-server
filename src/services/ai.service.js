@@ -22,7 +22,7 @@ const MEDICAL_CLAIM_SCHEMA = {
         gender: { type: "string", description: "Patient's gender (Male, Female, Other)" },
         insuranceId: { type: "string", description: "Patient's insurance ID number" },
       },
-      // required: ['name']
+      required: ["name"]
     },
     providerInfo: {
       type: "object",
@@ -31,37 +31,37 @@ const MEDICAL_CLAIM_SCHEMA = {
         address: { type: "string", description: "Address of the hospital or medical provider" },
         providerNumber: { type: "string", description: "Provider's official number or ID" },
       },
-      // required: ['name']
+      required: ["name", "providerNumber"]
     },
     claimDetails: {
       type: "object",
       properties: {
         serviceDate: { type: "string", description: "Date of service (YYYY-MM-DD)" },
         dischargeDate: { type: "string", description: "Date of discharge, if applicable (YYYY-MM-DD)" },
-        diagnosisCodes: { type: "array", items: { type: "string" }, description: "List of diagnosis codes (e.g., ICD-10)" },
-        procedureCodes: { type: "array", items: { type: "string" }, description: "List of procedure codes (e.g., CPT)" },
         totalAmount: { type: "number", description: "Total amount of the claim" },
-        currency: { type: "string", description: "Currency of the amount (e.g., USD, INR)", default: "INR"},
         coveredAmount: { type: "number", description: "Amount covered by insurance" },
         patientResponsibility: { type: "number", description: "Amount patient is responsible for" },
-        claimType: { type: "string", description: "Type of claim (e.g., INPATIENT, OUTPATIENT, CONSULTATION)" }
+        currency: { type: "string", description: "Currency of the amount (e.g., USD, INR)", default: "INR" },
+        claimType: { type: "string", description: "Type of claim (e.g., INPATIENT, OUTPATIENT, CONSULTATION)" },
+        diagnosisCodes: { type: "array", items: { type: "string" }, description: "List of diagnosis codes (e.g., ICD-10)" },
+        procedureCodes: { type: "array", items: { type: "string" }, description: "List of procedure codes (e.g., CPT)" },
       },
-      // required: ['serviceDate', 'totalAmount']
+      required: ["serviceDate", "totalAmount"]
     },
     extractedMedicalEntities: {
-        type: "array",
-        description: "Key medical entities extracted, like medications, conditions.",
-        items: {
-            type: "object",
-            properties: {
-                type: { type: "string", description: "Type of entity (e.g., MEDICATION, CONDITION)"},
-                text: { type: "string", description: "The actual text of the entity"},
-                score: { type: "number", description: "Confidence score of extraction"}
-            }
+      type: "array",
+      description: "Key medical entities extracted, like medications, conditions.",
+      items: {
+        type: "object",
+        properties: {
+          type: { type: "string", description: "Type of entity (e.g., MEDICATION, CONDITION)" },
+          text: { type: "string", description: "The actual text of the entity" },
+          score: { type: "number", description: "Confidence score of extraction" }
         }
+      }
     }
   },
-  // required: ['patientInfo', 'providerInfo', 'claimDetails']
+  required: ["patientInfo", "providerInfo", "claimDetails"]
 };
 
 class AIService {
@@ -75,12 +75,16 @@ class AIService {
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.modelName = GEMINI_CONFIG.MODEL_NAME;
     this.medicalClaimSchema = MEDICAL_CLAIM_SCHEMA;
-    console.log(`[AIService Constructor] Initialized with model: ${this.modelName}`);
+    console.log(`[AIService Constructor] Service initialized.`);
   }
 
-  async extractMedicalDataFromDocument(documentBuffer, mimeType) {
+  async extractMedicalDataFromDocument(documentBuffer, mimeType, userId = null) {
     try {
-      console.log(`[AIService] Starting data extraction for document type: ${mimeType}`);
+      if (userId) {
+        console.log(`[AIService] Data extraction triggered for userId: ${userId}`);
+      } else {
+        console.log(`[AIService] Data extraction triggered.`);
+      }
       const model = this.genAI.getGenerativeModel({
         model: this.modelName,
         safetySettings: [
@@ -108,10 +112,9 @@ class AIService {
 
       const response = result.response;
       const extractedText = response.text();
-      console.log('[AIService] Raw AI Response Text:', extractedText.substring(0, 500) + '...'); // Log snippet
-
+      // No logging of extractedText or sensitive data
       const extractedData = JSON.parse(extractedText || '{}');
-      console.log('[AIService] Parsed Extracted Data:', extractedData);
+      // No logging of extractedData
       return extractedData;
 
     } catch (error) {

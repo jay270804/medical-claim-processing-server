@@ -36,8 +36,6 @@ class ClaimService {
       s3Key,      // Redundant if documentId is s3Key, but explicit
       status: claimStatus, // Updated status logic
       extractedData: extractedData || {},
-      // Per API contract, these fields might be top-level or nested in extractedData
-      // For now, assuming they might be top-level for easier querying if needed, or derived
       patientName: extractedData?.patientInfo?.name || extractedData?.patient_details?.name,
       providerName: extractedData?.providerInfo?.name || extractedData?.hospital_details?.name,
       serviceDate: extractedData?.claimDetails?.serviceDate || extractedData?.claim_details?.claim_date,
