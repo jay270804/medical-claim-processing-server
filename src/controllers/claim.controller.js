@@ -2,6 +2,7 @@ const claimService = require('../services/claim.service');
 
 class ClaimController {
   async getClaimById(req, res) {
+    console.log(`[getClaimById] Received request for claimId: ${req.params.claimId} from user: ${req.user.id}`);
     try {
       const { claimId } = req.params;
       const userId = req.user.id; // From authenticateJWT middleware

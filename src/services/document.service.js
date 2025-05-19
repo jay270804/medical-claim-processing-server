@@ -89,19 +89,23 @@ class DocumentService {
       const claim = await claimService.getClaimByS3Key(documentId, userId);
       console.log(`[generatePresignedUrl] Access authorized for user ${userId} to document ${documentId} via claim ${claim.id}`);
 
+      // Determine file name for download
+      const fileName = claim.extractedData?.fileName || documentId.substring(documentId.lastIndexOf('/')+1);
+
       const command = new GetObjectCommand({
         Bucket: this.bucketName,
         Key: documentId,
+        ResponseContentDisposition: `attachment; filename=\"${fileName}\"` // Force download
       });
 
       const expiresIn = 3600; // 1 hour
       const url = await getSignedUrl(this.s3Client, command, { expiresIn });
       const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
-      console.log(`[generatePresignedUrl] Generated URL for S3 Key: ${documentId}`);
+      console.log(`[generatePresignedUrl] Generated URL for S3 Key: ${documentId} with download option`);
       return {
         documentId: documentId,
-        fileName: claim.extractedData?.fileName || documentId.substring(documentId.lastIndexOf('/')+1),
+        fileName: fileName,
         presignedUrl: url,
         expiresAt: expiresAt,
       };

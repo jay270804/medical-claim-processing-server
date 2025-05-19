@@ -61,6 +61,7 @@ class ClaimService {
   }
 
   async getClaimById(claimId, userId) {
+    console.log(`[getClaimById] Service called with claimId: ${claimId}, userId: ${userId}`);
     const params = {
       TableName: this.tableName,
       Key: { id: claimId },
