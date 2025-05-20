@@ -19,28 +19,63 @@ class ClaimService {
     console.log(`[ClaimService Constructor] Claims DynamoDB Table: ${this.tableName}`);
   }
 
-  // This method will be expanded when AI processing is integrated
+  // Helper to extract summary fields from extracted lines
+  _extractSummaryFields(extractedData) {
+    if (!extractedData?.lines) return {};
+
+    const summary = {};
+    const lines = extractedData.lines;
+
+    // Find highest confidence match for each key field
+    const keyFields = {
+      patientName: ['patient_name', 'patient name', 'name'],
+      providerName: ['provider_name', 'hospital_name', 'hospital name', 'provider name'],
+      serviceDate: ['service_date', 'date of service', 'visit date'],
+      amount: ['net_payable_amount', 'total_amount', 'net_payable', 'final_amount'],
+      claimType: ['claim_type', 'type of claim', 'claim type']
+    };
+
+    for (const [field, possibleKeys] of Object.entries(keyFields)) {
+      const matchingLines = lines.filter(line =>
+        possibleKeys.includes(line.key.toLowerCase()) &&
+        line.confidence >= (extractedData.metadata?.confidenceThreshold || 0.7)
+      );
+
+      if (matchingLines.length > 0) {
+        // Sort by confidence and take the highest
+        const bestMatch = matchingLines.sort((a, b) => b.confidence - a.confidence)[0];
+        summary[field] = bestMatch.value;
+      }
+    }
+
+    return summary;
+  }
+
   async createClaimInternal(userId, documentId, s3Key, extractedData) {
     const timestamp = new Date().toISOString();
     const claimId = uuidv4();
 
     let claimStatus = 'NOT_PROCESSED';
-    if (extractedData && Object.keys(extractedData).length > 0) {
+    if (extractedData?.extractedData?.lines?.length > 0) {
       claimStatus = 'PROCESSED';
     }
+
+    // Extract summary fields from the lines
+    const summary = this._extractSummaryFields(extractedData?.extractedData);
 
     const claim = {
       id: claimId,
       userId,
-      documentId, // s3Key is the documentId here
-      s3Key,      // Redundant if documentId is s3Key, but explicit
-      status: claimStatus, // Updated status logic
-      extractedData: extractedData || {},
-      patientName: extractedData?.patientInfo?.name || extractedData?.patient_details?.name,
-      providerName: extractedData?.providerInfo?.name || extractedData?.hospital_details?.name,
-      serviceDate: extractedData?.claimDetails?.serviceDate || extractedData?.claim_details?.claim_date,
-      amount: extractedData?.claimDetails?.totalAmount || extractedData?.claim_details?.total_amount,
-      claimType: extractedData?.claimDetails?.claimType || extractedData?.claim_details?.claim_type,
+      documentId,
+      s3Key,
+      status: claimStatus,
+      extractedData: extractedData?.extractedData || { lines: [], metadata: { processedAt: timestamp } },
+      // Summary fields for quick access
+      patientName: summary.patientName,
+      providerName: summary.providerName,
+      serviceDate: summary.serviceDate,
+      amount: summary.amount,
+      claimType: summary.claimType,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -182,12 +217,7 @@ class ClaimService {
           params.ExclusiveStartKey = lastEvaluatedKey;
         }
         const data = await this.docClient.send(new QueryCommand(params));
-        if (data.Items && data.Items.length > 0) {
-            console.log(`[getClaimByS3Key] Fetched ${data.Items.length} claims for userId ${userId}. First item (sample):`, JSON.stringify(data.Items[0]));
-            data.Items.forEach(claim => {
-                console.log(`[getClaimByS3Key] Checking claimId: ${claim.id}, s3Key: ${claim.s3Key}, documentId: ${claim.documentId}`);
-            });
-        }
+
         userClaims = userClaims.concat(data.Items || []);
         lastEvaluatedKey = data.LastEvaluatedKey;
       } while (lastEvaluatedKey);
