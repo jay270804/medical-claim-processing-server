@@ -14,10 +14,10 @@ const GEMINI_CONFIG = {
     5. Remove any empty lines or irrelevant visual artifacts.
 
     Common labels to use:
-    - patient_name: Patient's full name
-    - patient_phone: Patient's phone/mobile number
-    - patient_dob: Patient's date of birth
-    - service_date: Date of medical service
+    - patient_name: Patient's/Customer's full name
+    - patient_phone: Patient's/Customer's phone/mobile number
+    - patient_dob: Patient's/Customer's date of birth
+    - service_date: Date of medical service (YYYY-MM-DD)
     - provider_name: Hospital or pharmacy name
     - provider_phone: Provider's phone number
     - provider_address: Provider's address
