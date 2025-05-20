@@ -2,15 +2,15 @@
 
 ## Description
 
-This is the backend server for the Medical Claim Processing application. It handles user authentication, document uploads to AWS S3, medical data extraction using the Google Gemini API, claim creation and management in AWS DynamoDB, and provides APIs for the frontend application.
+This is the backend server for the Medical Claim Processing application. It handles user authentication, document uploads to AWS S3, and an **AI-enhanced medical data extraction and processing pipeline** using the Google Gemini API. It manages claim creation and storage in AWS DynamoDB and provides APIs for the frontend application.
 
 ## Features
 
 - User Authentication (Registration, Login)
 - Document Upload and Storage (AWS S3)
-- AI-Powered Medical Data Extraction (Google Gemini)
-- Claim Creation and Management (AWS DynamoDB)
-- API Endpoints for Frontend Communication
+- **AI-Enhanced Medical Data Extraction (Google Gemini, with line-by-line extraction and confidence scoring)**
+- Claim Creation and Management (AWS DynamoDB, supporting a new flexible data structure)
+- API Endpoints for Frontend Communication (**Updated API responses for claims reflecting the new data structure**)
 
 ## Technologies Used
 
@@ -64,8 +64,8 @@ Create a `.env` file in the project root with the following variables:
 -   `POST /documents`: Upload a document and trigger claim processing.
 -   `GET /documents/:documentId/status`: Get the processing status of a document.
 -   `GET /documents/:documentId/presigned-url`: Get a presigned URL to download a document.
--   `GET /claims`: Get a list of claims for the authenticated user.
--   `GET /claims/:claimId`: Get details for a specific claim.
+-   `GET /claims`: Get a list of claims for the authenticated user. **Note: Response structure updated to include a summary object and pagination.**
+-   `GET /claims/:claimId`: Get details for a specific claim. **Note: Response structure updated to include detailed extracted data.**
 
 ## Deployment on EC2 with Nginx
 
